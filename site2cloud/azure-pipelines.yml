@@ -1,0 +1,140 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: CONTROLLERUSERNAME
+    displayName: Aviatrix Controller Username
+    type: string
+    default:
+  - name: CONTROLLERPASSWORD
+    displayName: Aviatrix Controller Password
+    type: string
+    default:
+  - name: CONTROLLERIP
+    displayName: Aviatrix Controller IP
+    type: string
+    default:
+  - name: OCIACCESSACCOUNT
+    displayName: OCI Access Account Name
+    type: string
+    default:
+  - name: AZUREACCESSACCOUNT
+    displayName: Azure Access Account Name
+    type: string
+    default:
+  - name: AZUREREGION
+    displayName: Region To Deploy Resources In Azure
+    type: string
+    values:
+      - "Australia East"
+      - "Australia Southeast"
+      - "Brazil South"
+      - "Canada Central"
+      - "Canada East"
+      - "Central India"
+      - "Central US"
+      - "East Asia"
+      - "East US"
+      - "East US 2"
+      - "France Central"
+      - "Germany West Central"
+      - "Japan East"
+      - "Japan West"
+      - "North Europe"
+      - "Norway East"
+      - "South Africa North"
+      - "South Central US"
+      - "South India"
+      - "Southeast Asia"
+      - "UK South"
+      - "West Europe"
+      - "West US"
+      - "West US 2"
+      - "West US 3"
+  - name: OCIREGION
+    displayName: Region To Deploy Resources In OCI
+    type: string
+    values:
+      - "ap-hyderabad-1"
+      - "ap-melbourne-1"
+      - "ap-mumbai-1"
+      - "ap-singapore-1"
+      - "ap-sydney-1"
+      - "ca-montreal-1"
+      - "ca-toronto-1"
+      - "eu-amsterdam-1"
+      - "eu-frankfurt-1"
+      - "eu-madrid-1"
+      - "eu-milan-1"
+      - "eu-stockholm-1"
+      - "eu-zurich-1"
+      - "me-abudhabi-1"
+      - "me-dubai-1"
+      - "me-jeddah-1"
+      - "sa-saopaulo-1"
+      - "sa-santiago-1"
+      - "sa-vinhedo-1"
+      - "uk-london-1"
+      - "us-ashburn-1"
+      - "us-chicago-1"
+      - "us-phoenix-1"
+      - "us-sanjose-1"
+  
+
+variables:
+- name: TF_VAR_CONTROLLERUSERNAME
+  value: '${{ parameters.CONTROLLERUSERNAME }}'
+- name: TF_VAR_CONTROLLERPASSWORD
+  value: '${{ parameters.CONTROLLERPASSWORD }}'
+- name: TF_VAR_CONTROLLERIP
+  value: '${{ parameters.CONTROLLERIP }}'
+- name: TF_VAR_OCIACCESSACCOUNT
+  value: '${{ parameters.OCIACCESSACCOUNT }}'
+- name: TF_VAR_AZUREACCESSACCOUNT
+  value: '${{ parameters.AZUREACCESSACCOUNT }}'
+- name: TF_VAR_AZUREREGION
+  value: '${{ parameters.AZUREREGION }}'
+- name: TF_VAR_OCIREGION
+  value: '${{ parameters.OCIREGION }}'
+
+steps:
+- task: TerraformInstaller@1
+  displayName: 'TF Install'
+  inputs:
+    terraformVersion: 'latest'
+
+- task: TerraformTaskV4@4
+  displayName: 'TF Init'
+  inputs:
+    provider: 'azurerm'
+    command: 'init'
+    backendServiceArm: 'serv-conn-lab-deployments'
+    backendAzureRmResourceGroupName: 'null'
+    backendAzureRmStorageAccountName: 'null'
+    backendAzureRmContainerName: 'null'
+    backendAzureRmKey: 'null'
+
+- task: TerraformTaskV4@4
+  displayName: 'TF validate'
+  inputs:
+    provider: 'azurerm'
+    command: 'validate'
+
+- task: TerraformTaskV4@4
+  displayName: 'TF plan'
+  inputs:
+    provider: 'azurerm'
+    command: 'plan'
+    commandOptions: '-out=tfplan'
+    environmentServiceNameAzureRM: 'serv-conn-lab-deployments'
+
+- task: TerraformTaskV4@4
+  displayName: 'TF apply'
+  inputs:
+    provider: 'azurerm'
+    command: 'apply'
+    commandOptions: '-auto-approve -input=false tfplan'
+    environmentServiceNameAzureRM: 'serv-conn-lab-deployments'
